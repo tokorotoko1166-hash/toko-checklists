@@ -1,0 +1,1412 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <!-- LIFF SDK の導入 -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>作業チェックリスト｜テスト三郷現場現場</title>
+  <!-- Google Fonts 導入によるモダンなタイポグラフィ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    /* === デザインシステム & 変数定義 === */
+    :root {
+      --bg-app: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-header-glow: rgba(255, 255, 255, 0.15);
+      --text-main: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      
+      /* アニメーション付き3色流体グラデーション */
+      --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0d9488 100%);
+      
+      /* セクション別アクセントカラー */
+      --sec0-color: #ef4444; /* 活線排除・検電確認 */
+      --sec1-color: #f59e0b; /* 脚立使用・転落防止 */
+      --sec2-color: #7c3aed; /* 誘導灯器具取付 */
+      --sec3-color: #2563eb; /* カウンターコンセント取付 */
+      --sec4-color: #4b5563; /* 整理整頓 */
+      
+      /* ステータスカラー */
+      --bg-ok: #dcfce7;
+      --text-ok: #15803d;
+      --border-ok: #22c55e;
+      
+      --bg-ng: #fee2e2;
+      --text-ng: #b91c1c;
+      --border-ng: #ef4444;
+      
+      --bg-na: #eff6ff;
+      --text-na: #1d4ed8;
+      --border-na: #3b82f6;
+      
+      --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
+      --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+      --radius-lg: 20px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+    }
+
+    /* ダークモード定義 */
+    body.dark-mode {
+      --bg-app: #090d16;
+      --bg-card: #111a2e;
+      --bg-header-glow: rgba(0, 0, 0, 0.25);
+      --text-main: #f8fafc;
+      --text-sub: #cbd5e1;
+      --text-muted: #64748b;
+      --border: #1e293b;
+      
+      --primary-gradient: linear-gradient(135deg, #090d16 0%, #1e3a8a 50%, #0891b2 100%);
+      
+      --bg-ok: rgba(22, 163, 74, 0.15);
+      --text-ok: #4ade80;
+      --border-ok: #22c55e;
+      
+      --bg-ng: rgba(220, 38, 38, 0.15);
+      --text-ng: #fca5a5;
+      --border-ng: #f87171;
+      
+      --bg-na: rgba(37, 99, 235, 0.15);
+      --text-na: #93c5fd;
+      --border-na: #60a5fa;
+    }
+
+    /* === ベーススタイル === */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body {
+      font-family: 'Noto Sans JP', 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: var(--bg-app);
+      color: var(--text-main);
+      padding-bottom: 40px;
+      transition: background 0.3s ease, color 0.3s ease;
+      line-height: 1.5;
+    }
+
+    /* === 流体アニメーションヘッダー === */
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .header {
+      background: var(--primary-gradient);
+      background-size: 200% 200%;
+      animation: gradientShift 10s ease infinite;
+      color: white;
+      padding: 24px 16px 20px;
+      box-shadow: 0 10px 30px rgba(30, 58, 138, 0.25);
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -30%;
+      width: 150%;
+      height: 150%;
+      background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .title-area {
+      flex: 1;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.03em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header p.subtitle {
+      font-size: 20px;
+      font-weight: 900;
+      margin-top: 4px;
+    }
+
+    .header p.detail {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 4px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    /* テーマ切り替えスイッチ */
+    .theme-toggle {
+      background: rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: white;
+      transition: var(--transition);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    .theme-toggle:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    .theme-toggle:active {
+      transform: scale(0.95);
+    }
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    /* メタ入力フィールド (グラス風) */
+    .meta {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+      flex-wrap: wrap;
+    }
+
+    .meta-field {
+      background: var(--bg-header-glow);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      flex: 1;
+      min-width: 140px;
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      transition: var(--transition);
+    }
+    .meta-field:focus-within {
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    .meta-field label {
+      display: block;
+      font-size: 10px;
+      opacity: 0.8;
+      margin-bottom: 2px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+
+    .meta-field input {
+      background: none;
+      border: none;
+      outline: none;
+      color: white;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      width: 100%;
+    }
+    .meta-field input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* プログレスバー */
+    .progress-section {
+      margin-top: 18px;
+    }
+
+    .progress-wrap {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 30px;
+      height: 10px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #34d399 0%, #10b981 100%);
+      border-radius: 30px;
+      width: 0%;
+      transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 700;
+      margin-top: 6px;
+      opacity: 0.95;
+    }
+
+    /* === KY (危険予知) ボックス === */
+    .ky-box {
+      background: #fff5f5;
+      border-left: 5px solid #ef4444;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 14px 16px;
+      margin: 16px 16px 8px;
+      font-size: 12.5px;
+      color: #991b1b;
+      line-height: 1.8;
+      box-shadow: var(--shadow-md);
+    }
+    body.dark-mode .ky-box {
+      background: rgba(239, 68, 68, 0.08);
+      border-left-color: #f87171;
+      color: #fca5a5;
+      box-shadow: none;
+    }
+
+    .ky-title {
+      font-weight: 900;
+      font-size: 14px;
+      margin-bottom: 6px;
+      color: #dc2626;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    body.dark-mode .ky-title {
+      color: #f87171;
+    }
+
+    /* === 凡例表示 === */
+    .legend {
+      display: flex;
+      gap: 12px;
+      padding: 8px 18px 0;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-sub);
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* === メインコンテンツエリア === */
+    .content {
+      padding: 16px;
+    }
+
+    .section {
+      background: var(--bg-card);
+      margin-bottom: 16px;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border);
+      transition: var(--transition);
+    }
+    .section:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .sec-head {
+      padding: 15px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+      transition: var(--transition);
+      color: white;
+    }
+
+    .sec-head .icon {
+      font-size: 18px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+
+    .sec-head .title {
+      flex: 1;
+      letter-spacing: 0.02em;
+    }
+
+    .sec-head .cnt {
+      font-size: 11px;
+      font-weight: 800;
+      background: rgba(255, 255, 255, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 3px 10px;
+      border-radius: 30px;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    .sec-head .arr {
+      font-size: 11px;
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .section.closed .arr {
+      transform: rotate(-90deg);
+    }
+
+    .section.closed .sec-body {
+      display: none;
+    }
+
+    .sec-body {
+      background: var(--bg-card);
+    }
+
+    /* セクション個別テーマカラー */
+    .s0 .sec-head { background: linear-gradient(135deg, var(--sec0-color), #f87171); }
+    .s1 .sec-head { background: linear-gradient(135deg, var(--sec1-color), #fbbf24); }
+    .s2 .sec-head { background: linear-gradient(135deg, var(--sec2-color), #8b5cf6); }
+    .s3 .sec-head { background: linear-gradient(135deg, var(--sec3-color), #3b82f6); }
+    .s4 .sec-head { background: linear-gradient(135deg, var(--sec4-color), #6b7280); }
+
+    /* 各チェック項目 */
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-card);
+      transition: var(--transition);
+    }
+    .item:last-child {
+      border-bottom: none;
+    }
+
+    .item.ok { background: var(--bg-ok); }
+    .item.ng { background: var(--bg-ng); }
+    .item.na { background: var(--bg-na); }
+
+    .item-no {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--text-sub);
+      flex-shrink: 0;
+      font-family: 'Outfit', sans-serif;
+      transition: var(--transition);
+    }
+    .item.ok .item-no { background: var(--border-ok); color: white; }
+    .item.ng .item-no { background: var(--border-ng); color: white; }
+    .item.na .item-no { background: var(--border-na); color: white; }
+
+    .item-text {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-main);
+      line-height: 1.6;
+      transition: var(--transition);
+    }
+    .item.ok .item-text { color: var(--text-ok); }
+    .item.ng .item-text { color: var(--text-ng); }
+    .item.na .item-text { color: var(--text-na); }
+
+    /* トグルボタン */
+    .btns {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .btn-ok, .btn-ng, .btn-na {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-sm);
+      border: 2px solid;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: var(--transition);
+      line-height: 1.2;
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .btn-ok:active, .btn-ng:active, .btn-na:active {
+      transform: scale(0.9);
+    }
+
+    .btn-ok { border-color: #22c55e; color: #22c55e; }
+    .btn-ok.on { background: #22c55e; color: white !important; }
+    
+    .btn-ng { border-color: #ef4444; color: #ef4444; }
+    .btn-ng.on { background: #ef4444; color: white !important; }
+    
+    .btn-na { border-color: #3b82f6; color: #3b82f6; font-size: 9.5px; }
+    .btn-na.on { background: #3b82f6; color: white !important; }
+
+    /* 備考欄 */
+    .remark {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s ease;
+      padding: 0 16px 0 50px;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+    }
+    .remark:last-child {
+      border-bottom: none;
+    }
+    .remark.show {
+      max-height: 120px;
+      padding: 0 16px 14px 50px;
+    }
+
+    .remark textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      color: var(--text-main);
+      resize: none;
+      background: var(--bg-app);
+      outline: none;
+      transition: var(--transition);
+    }
+    .remark textarea:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+
+    /* === ボトム固定バー === */
+    .bottom {
+      background: var(--bg-card);
+      padding: 16px;
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.08);
+      margin-top: 24px;
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 100;
+      border-top: 1px solid var(--border);
+      transition: var(--transition);
+    }
+
+    .bottom-btns {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-reset {
+      flex: 1;
+      padding: 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .btn-reset:hover {
+      background: var(--bg-app);
+      color: var(--text-main);
+    }
+
+    .btn-report {
+      flex: 2;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 245, 0.2);
+      transition: var(--transition);
+    }
+    .btn-report:hover {
+      box-shadow: 0 6px 16px rgba(37, 99, 245, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .warning-box {
+      margin-top: 12px;
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      background: rgba(239, 68, 68, 0.06);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: var(--radius-md);
+      font-size: 11px;
+      color: #b91c1c;
+      line-height: 1.6;
+      font-weight: 700;
+      text-align: left;
+    }
+    body.dark-mode .warning-box {
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+    }
+
+    .btn-mail {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-mail:hover {
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+      transform: translateY(-1px);
+    }
+
+    /* === オーバーレイ & モーダル === */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 300;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px 20px 40px;
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.2);
+      animation: slideUp 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);
+      border-top: 1px solid var(--border);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal h2 {
+      font-size: 18px;
+      font-weight: 900;
+      color: var(--text-main);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .s-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13.5px;
+      font-weight: 500;
+    }
+    .s-row:last-child {
+      border-bottom: none;
+    }
+
+    .t-ok { color: #10b981; font-weight: 700; }
+    .t-ng { color: #ef4444; font-weight: 700; }
+    .t-na { color: #3b82f6; font-weight: 700; }
+    .t-p { color: var(--text-muted); }
+
+    .modal-close {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px;
+      border: none;
+      border-radius: var(--radius-md);
+      background: var(--text-main);
+      color: var(--bg-card);
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .copy-instruction {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-bottom: 14px;
+      background: var(--bg-app);
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      line-height: 1.6;
+    }
+
+    .copy-row {
+      margin-bottom: 14px;
+    }
+    .copy-row label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+    .copy-area-wrap {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .copy-area-wrap textarea {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      font-family: inherit;
+      font-size: 12px;
+      resize: none;
+      background: var(--bg-app);
+      color: var(--text-main);
+      outline: none;
+    }
+    .btn-copy {
+      padding: 0 16px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: #2563eb;
+      color: white;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+    .btn-copy:hover {
+      background: #1d4ed8;
+    }
+  </style>
+</head>
+<body>
+
+<!-- アプリヘッダー -->
+<div class="header">
+  <div class="header-top">
+    <div class="title-area">
+      <h1>🏗 作業チェックリスト</h1>
+      <p class="subtitle">テスト三郷現場現場</p>
+      <p class="detail">ケーブル敷設、開閉器取付結線</p>
+    </div>
+    <!-- テーマ切り替えトグル -->
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="テーマ切り替え">
+      <svg id="theme-icon" viewBox="0 0 24 24">
+        <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.01c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
+      </svg>
+    </button>
+  </div>
+  
+  <div class="meta">
+    <div class="meta-field">
+      <label>作業日</label>
+      <input type="date" id="d1" onchange="saveState()">
+    </div>
+    <div class="meta-field">
+      <label>作業責任者</label>
+      <input type="text" id="d2" placeholder="氏名を入力" oninput="saveState()">
+    </div>
+  </div>
+  
+  <div class="progress-section">
+    <div class="progress-wrap"><div class="progress-bar" id="pb"></div></div>
+    <div class="progress-text">
+      <span id="pl">0 / 16 項目完了 (0%)</span>
+      <span>進捗率</span>
+    </div>
+  </div>
+</div>
+
+<!-- ⚠️ KY (危険予知) 重点事項 -->
+<div class="ky-box">
+  <div class="ky-title">⚠ KY（危険予知）重点活動事項</div>
+  1. 高所作業車からの転落防止のため、安全帯またはフルハーネスを確実に着用する。
+</div>
+
+<!-- 凡例 -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div>確認済み (OK)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>要是正 (NG)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>該当なし (N/A)</div>
+</div>
+
+<!-- チェックリスト本体 -->
+<div class="content" id="checklist-container"></div>
+
+<!-- ボトム操作バー -->
+<div class="bottom">
+  <div class="bottom-btns">
+    <button class="btn-reset" onclick="resetAll()">リセット</button>
+    <button class="btn-report" onclick="showReport()">📋 レポート確認</button>
+  </div>
+  
+  <div class="warning-box">
+    ⚠️ 【業務指示】<br>
+    ・チェックリストの形骸化（適当な全OKチェック等）は重大事故に直結します。<br>
+    ・現場で一項目ずつ視認・動作確認の上、チェックを履行してください。<br>
+    ・虚偽報告やルーティン作業と認められた場合、人事評価や賞与に影響することがあります。
+  </div>
+  
+  <button class="btn-mail" onclick="sendMail()">
+    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="flex-shrink:0;">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+    </svg>
+    結果をメールで報告する
+  </button>
+</div>
+
+<!-- モーダル：レポート確認 -->
+<div class="overlay" id="ov" onclick="closeOv(event)">
+  <div class="modal">
+    <h2>📋 チェック結果サマリー</h2>
+    <div id="mc"></div>
+    <button class="modal-close" onclick="document.getElementById('ov').classList.remove('show')">閉じる</button>
+  </div>
+</div>
+
+<!-- モーダル：メール送信控え -->
+<div class="overlay" id="copy-modal" onclick="closeCopyModal(event)">
+  <div class="modal">
+    <h2>📧 メール送信控え</h2>
+    <div class="copy-instruction">
+      自動でメールアプリが起動しない場合は、お手数ですが下記の件名と本文をコピーして送信してください。<br>
+      送信先：<b>tokoro@toko1979.co.jp, kunugi@toko1979.co.jp, d.mori@toko1979.co.jp, t.kato@toko1979.co.jp</b>
+    </div>
+    <div class="copy-row">
+      <label>件名</label>
+      <div class="copy-area-wrap">
+        <textarea id="mail-subject-text" rows="2" readonly></textarea>
+        <button class="btn-copy" onclick="copyText('mail-subject-text', this)">📋 コピー</button>
+      </div>
+    </div>
+    <div class="copy-row">
+      <label>本文</label>
+      <div class="copy-area-wrap">
+        <textarea id="mail-body-text" rows="8" readonly></textarea>
+        <button class="btn-copy" onclick="copyText('mail-body-text', this)">📋 コピー</button>
+      </div>
+    </div>
+    <button class="modal-close" onclick="document.getElementById('copy-modal').classList.remove('show')">閉じる</button>
+  </div>
+</div>
+
+<script>
+// === エラーハンドリング (画面デバッグ用) ===
+// 独立したスクリプトタグで先にロードし、後続のタグでのパースエラー（構文エラー）も確実に捕捉する
+window.onerror = function(message, source, lineno, colno, error) {
+  var errDiv = document.createElement('div');
+  errDiv.style.position = 'fixed';
+  errDiv.style.top = '0';
+  errDiv.style.left = '0';
+  errDiv.style.width = '100%';
+  errDiv.style.background = '#ef4444';
+  errDiv.style.color = 'white';
+  errDiv.style.padding = '12px';
+  errDiv.style.zIndex = '99999';
+  errDiv.style.fontSize = '12px';
+  errDiv.style.fontWeight = 'bold';
+  errDiv.style.lineHeight = '1.4';
+  errDiv.style.wordBreak = 'break-all';
+  errDiv.style.boxShadow = '0 4px 10px rgba(0,0,0,0.2)';
+  errDiv.innerHTML = '⚠️ JavaScriptエラー検出: ' + message + '<br><small>場所: ' + source + ' (行: ' + lineno + ', 列: ' + colno + ')</small>';
+  document.body.appendChild(errDiv);
+  return false;
+};
+// JavaScript生存確認用のマークを画面に付与
+try {
+  setTimeout(function() {
+    var subtitleEl = document.querySelector('.header p.subtitle');
+    if (subtitleEl) {
+      subtitleEl.innerHTML += ' 🟢';
+    }
+  }, 100);
+} catch (e) {}
+</script>
+
+<script>
+// === データ定義 ===
+var GENBA_NAME = "テスト三郷現場";
+var WORK_CONTENT = "ケーブル敷設、開閉器取付結線";
+var TOTAL = 16;
+var secMap = [
+  {
+    "id": 0,
+    "name": "⚡ 活線排除・確実なブレーカー遮断",
+    "icon": "⚡",
+    "from": 0,
+    "to": 3
+  },
+  {
+    "id": 1,
+    "name": "🪜 高所作業車・墜落制止用器具",
+    "icon": "🪜",
+    "from": 4,
+    "to": 7
+  },
+  {
+    "id": 2,
+    "name": "🛠️ 工具・資材の取扱と作業環境",
+    "icon": "🛠️",
+    "from": 8,
+    "to": 11
+  },
+  {
+    "id": 3,
+    "name": "🧹 整理整頓・完了確認",
+    "icon": "🧹",
+    "from": 12,
+    "to": 15
+  }
+];
+var ITEMS = [
+  "作業対象回路のブレーカーを特定し、完全に遮断する。",
+  "検電器やテスタを使用し、無電圧であることを確実に確認する。",
+  "他者が誤ってブレーカーを投入しないよう、施錠または表示を行う。",
+  "👆 <b>指差呼称：</b>「停電範囲、無電圧ヨシ！」",
+  "高所作業車の点検（アウトリガー、動作確認）を確実に行う。",
+  "高所作業車からの転落防止のため、安全帯またはフルハーネスを確実に着用し、ランヤードをフックする。",
+  "作業床の縁や開口部からの転落防止措置を確認する。",
+  "👆 <b>指差呼称：</b>「高所作業、安全帯ヨシ！」",
+  "使用する工具・機材の点検を行い、異常がないことを確認する。",
+  "資材の運搬経路を確認し、足元の障害物を取り除く。",
+  "作業エリア内の整理整頓、清掃を徹底し、通路を確保する。",
+  "👆 <b>指差呼称：</b>「工具資材、安全配置ヨシ！」",
+  "すべての工具、資材、不用品を完全に回収し、清掃を行う。",
+  "既存の施設や内装に傷をつけていないか、最終確認を行う。",
+  "作業箇所の結線、取り付け状態に緩みや異常がないか確認する。",
+  "👆 <b>指差呼称：</b>「現場内、異常なしヨシ！」"
+];
+var STORAGE_KEY = 'toko_checklist_テスト三郷現場_20260625';
+var LIFF_ID = "2010503502-tgc40ZdK";
+var CREATOR_ID = "U8136b7ae9596f4df6a7927b41d229a7c";
+
+var st = {};
+
+// === ページ初期化 ===
+if (LIFF_ID && CREATOR_ID) {
+  liff.init({ liffId: LIFF_ID }).then(function() {
+    if (!liff.isLoggedIn()) {
+      liff.login();
+    } else {
+      liff.getProfile().then(function(profile) {
+        if (profile.userId === CREATOR_ID) {
+          // 本人確認成功：🟢マークを追加して通常表示
+          try {
+            var subtitleEl = document.querySelector('.header p.subtitle');
+            if (subtitleEl) {
+              subtitleEl.innerHTML += ' 🟢';
+            }
+          } catch(e){}
+          
+          renderChecklist();
+          initDate();
+          loadState();
+        } else {
+          // 本人以外：ブロック画面を表示
+          document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;padding:20px;font-family:sans-serif;text-align:center;"><div style="font-size:48px;margin-bottom:20px;">🔒</div><h2 style="color:#ef4444;margin-bottom:10px;">アクセス権限がありません</h2><p style="color:#64748b;font-size:14px;line-height:1.6;">このチェックリストは作成者本人専用です。<br>他人のチェックリストを表示または編集することはできません。</p></div>';
+        }
+      }).catch(function(err) {
+        document.body.innerHTML = '【認証エラー】プロファイルの取得に失敗しました: ' + err.message;
+      });
+    }
+  }).catch(function(err) {
+    document.body.innerHTML = '【認証エラー】LIFFの初期化に失敗しました: ' + err.message;
+  });
+} else {
+  // LIFF IDが設定されていない場合は、通常通り起動（互換モード）
+  renderChecklist();
+  initDate();
+  loadState();
+}
+
+function renderChecklist() {
+  var container = document.getElementById('checklist-container');
+  var html = '';
+  
+  secMap.forEach(function(sec) {
+    html += '<div class="section s' + sec.id + '" id="sec' + sec.id + '">';
+    html += '  <div class="sec-head" onclick="toggleSec(' + sec.id + ')">';
+    html += '    <span class="icon">' + sec.icon + '</span>';
+    html += '    <span class="title">' + sec.name + '</span>';
+    html += '    <span class="cnt" id="c' + sec.id + '">0/' + (sec.to - sec.from + 1) + '</span>';
+    html += '    <span class="arr">▼</span>';
+    html += '  </div>';
+    html += '  <div class="sec-body">';
+    
+    for (var i = sec.from; i <= sec.to; i++) {
+      html += '    <div class="item" id="i' + i + '">';
+      html += '      <div class="item-no">' + (i + 1) + '</div>';
+      html += '      <div class="item-text">' + ITEMS[i] + '</div>';
+      html += '      <div class="btns">';
+      html += '        <button class="btn-ok" id="ok' + i + '" onclick="chk(' + i + ',\'ok\')">OK</button>';
+      html += '        <button class="btn-ng" id="ng' + i + '" onclick="chk(' + i + ',\'ng\')">NG</button>';
+      html += '        <button class="btn-na" id="na' + i + '" onclick="chk(' + i + ',\'na\')">該当<br>なし</button>';
+      html += '      </div>';
+      html += '    </div>';
+      html += '    <div class="remark" id="r' + i + '">';
+      html += '      <textarea rows="2" id="ta' + i + '" placeholder="是正内容・特記事項を入力してください（必須）" oninput="rem(' + i + ',this.value)"></textarea>';
+      html += '    </div>';
+    }
+    
+    html += '  </div>';
+    html += '</div>';
+  });
+  
+  container.innerHTML = html;
+  
+  for (var i = 0; i < TOTAL; i++) {
+    st[i] = { s: null, r: '' };
+  }
+}
+
+function initDate() {
+  try {
+    var t = new Date();
+    var mm = ('0' + (t.getMonth() + 1)).slice(-2);
+    var dd = ('0' + t.getDate()).slice(-2);
+    var dateEl = document.getElementById('d1');
+    if (dateEl) {
+      dateEl.value = t.getFullYear() + '-' + mm + '-' + dd;
+    }
+  } catch (e) {
+    console.error('日付初期化エラー:', e);
+  }
+}
+
+// === チェック処理・ロジック ===
+function chk(idx, val) {
+  st[idx].s = (st[idx].s === val) ? null : val;
+  var s = st[idx].s;
+  
+  var itemEl = document.getElementById('i' + idx);
+  if (itemEl) {
+    itemEl.className = 'item' + (s === 'ok' ? ' ok' : s === 'ng' ? ' ng' : s === 'na' ? ' na' : '');
+  }
+  
+  var btnOk = document.getElementById('ok' + idx);
+  var btnNg = document.getElementById('ng' + idx);
+  var btnNa = document.getElementById('na' + idx);
+  if (btnOk) btnOk.className = 'btn-ok' + (s === 'ok' ? ' on' : '');
+  if (btnNg) btnNg.className = 'btn-ng' + (s === 'ng' ? ' on' : '');
+  if (btnNa) btnNa.className = 'btn-na' + (s === 'na' ? ' on' : '');
+  
+  var remarkEl = document.getElementById('r' + idx);
+  if (remarkEl) {
+    if (s === 'ng') {
+      remarkEl.classList.add('show');
+    } else {
+      remarkEl.classList.remove('show');
+    }
+  }
+  
+  updateProgress();
+  saveState();
+}
+
+function rem(idx, val) {
+  st[idx].r = val;
+  saveState();
+}
+
+// === 進捗更新 ===
+function updateProgress() {
+  var done = 0;
+  for (var i = 0; i < TOTAL; i++) {
+    if (st[i].s) done++;
+  }
+  var pct = Math.round((done / TOTAL) * 100);
+  
+  var pb = document.getElementById('pb');
+  var pl = document.getElementById('pl');
+  if (pb) pb.style.width = pct + '%';
+  if (pl) pl.textContent = done + ' / ' + TOTAL + ' 項目完了 (' + pct + '%)';
+  
+  secMap.forEach(function(sec) {
+    var secDone = 0;
+    for (var i = sec.from; i <= sec.to; i++) {
+      if (st[i].s) secDone++;
+    }
+    var cntEl = document.getElementById('c' + sec.id);
+    if (cntEl) {
+      cntEl.textContent = secDone + '/' + (sec.to - sec.from + 1);
+    }
+  });
+}
+
+function toggleSec(id) {
+  var secEl = document.getElementById('sec' + id);
+  if (secEl) {
+    secEl.classList.toggle('closed');
+  }
+}
+
+// === LocalStorage によるデータの自動保存 & 復元 ===
+function saveState() {
+  try {
+    if (!window.localStorage) return;
+    var dateEl = document.getElementById('d1');
+    var mgrEl = document.getElementById('d2');
+    var dateVal = dateEl ? dateEl.value : '';
+    var mgrVal = mgrEl ? mgrEl.value : '';
+    var isDark = document.body.classList.contains('dark-mode');
+    
+    var stateData = {
+      date: dateVal,
+      manager: mgrVal,
+      st: st,
+      dark: isDark
+    };
+    
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stateData));
+  } catch (e) {
+    console.error('データの自動保存に失敗しました:', e);
+  }
+}
+
+function loadState() {
+  try {
+    if (!window.localStorage) return;
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    
+    var data = JSON.parse(raw);
+    var dateEl = document.getElementById('d1');
+    var mgrEl = document.getElementById('d2');
+    if (data.date && dateEl) dateEl.value = data.date;
+    if (data.manager && mgrEl) mgrEl.value = data.manager;
+    
+    if (data.dark) {
+      document.body.classList.add('dark-mode');
+      updateThemeIcon(true);
+    } else {
+      document.body.classList.remove('dark-mode');
+      updateThemeIcon(false);
+    }
+    
+    if (data.st) {
+      st = data.st;
+      for (var i = 0; i < TOTAL; i++) {
+        var s = st[i] ? st[i].s : null;
+        if (s) {
+          var itemEl = document.getElementById('i' + i);
+          var btnOk = document.getElementById('ok' + i);
+          var btnNg = document.getElementById('ng' + i);
+          var btnNa = document.getElementById('na' + i);
+          var remarkEl = document.getElementById('r' + i);
+          var taEl = document.getElementById('ta' + i);
+          
+          if (itemEl) itemEl.className = 'item ' + s;
+          if (btnOk) btnOk.className = 'btn-ok' + (s === 'ok' ? ' on' : '');
+          if (btnNg) btnNg.className = 'btn-ng' + (s === 'ng' ? ' on' : '');
+          if (btnNa) btnNa.className = 'btn-na' + (s === 'na' ? ' on' : '');
+          
+          if (s === 'ng' && remarkEl) {
+            remarkEl.classList.add('show');
+            if (st[i].r && taEl) {
+              taEl.value = st[i].r;
+            }
+          }
+        }
+      }
+      updateProgress();
+    }
+  } catch (e) {
+    console.error('データの復元に失敗しました:', e);
+  }
+}
+
+function resetAll() {
+  if (!confirm('入力されたすべてのチェック内容とメモをクリアしますか？')) return;
+  
+  try {
+    if (window.localStorage) {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  } catch (e) {
+    console.error('LocalStorageのクリアに失敗しました:', e);
+  }
+  
+  for (var i = 0; i < TOTAL; i++) {
+    st[i] = { s: null, r: '' };
+    var itemEl = document.getElementById('i' + i);
+    var btnOk = document.getElementById('ok' + i);
+    var btnNg = document.getElementById('ng' + i);
+    var btnNa = document.getElementById('na' + i);
+    var remarkEl = document.getElementById('r' + i);
+    var taEl = document.getElementById('ta' + i);
+    
+    if (itemEl) itemEl.className = 'item';
+    if (btnOk) btnOk.className = 'btn-ok';
+    if (btnNg) btnNg.className = 'btn-ng';
+    if (btnNa) btnNa.className = 'btn-na';
+    if (remarkEl) remarkEl.className = 'remark';
+    if (taEl) taEl.value = '';
+  }
+  
+  initDate();
+  var mgrEl = document.getElementById('d2');
+  if (mgrEl) mgrEl.value = '';
+  updateProgress();
+}
+
+// === テーマ切り替え ===
+function toggleTheme() {
+  var isDark = document.body.classList.toggle('dark-mode');
+  updateThemeIcon(isDark);
+  saveState();
+}
+
+function updateThemeIcon(isDark) {
+  var svg = document.getElementById('theme-icon');
+  if (isDark) {
+    svg.innerHTML = '<path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>';
+  } else {
+    svg.innerHTML = '<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.01c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>';
+  }
+}
+
+// === レポートダイアログ制御 ===
+function showReport() {
+  var date = document.getElementById('d1').value || '未入力';
+  var mgr = document.getElementById('d2').value || '未入力';
+  
+  var ok = 0, ng = 0, na = 0, pending = 0;
+  for (var i = 0; i < TOTAL; i++) {
+    if (st[i].s === 'ok') ok++;
+    else if (st[i].s === 'ng') ng++;
+    else if (st[i].s === 'na') na++;
+    else pending++;
+  }
+  
+  var html = '<div class="s-row"><span>作業日</span><span>' + date + '</span></div>';
+  html += '<div class="s-row"><span>作業責任者</span><span>' + mgr + '</span></div>';
+  
+  secMap.forEach(function(sec) {
+    var secOk = 0, secNg = 0, secNa = 0;
+    for (var i = sec.from; i <= sec.to; i++) {
+      if (st[i].s === 'ok') secOk++;
+      else if (st[i].s === 'ng') secNg++;
+      else if (st[i].s === 'na') secNa++;
+    }
+    var cnt = sec.to - sec.from + 1;
+    var allDone = (secOk + secNa === cnt);
+    var tag = '';
+    
+    if (secNg > 0) {
+      tag = '<span class="t-ng">⚠️ 要是正 ' + secNg + '件</span>';
+    } else if (allDone) {
+      tag = '<span class="t-ok">✔ 完了</span>';
+    } else {
+      tag = '<span class="t-p">' + (secOk + secNa) + '/' + cnt + ' 確認</span>';
+    }
+    
+    html += '<div class="s-row"><span>' + sec.icon + ' ' + sec.name + '</span>' + tag + '</div>';
+  });
+  
+  html += '<div class="s-row" style="font-weight:700;font-size:14px;padding-top:16px;border-top:2px solid var(--border);">';
+  html += '  <span>集計結果</span>';
+  html += '  <span>';
+  html += '    <span class="t-ok">OK: ' + ok + '</span> / ';
+  html += '    <span class="t-ng">NG: ' + ng + '</span> / ';
+  html += '    <span class="t-na">該当なし: ' + na + '</span> / ';
+  html += '    <span class="t-p">未確認: ' + pending + '</span>';
+  html += '  </span>';
+  html += '</div>';
+  
+  var ngList = [];
+  for (var i = 0; i < TOTAL; i++) {
+    if (st[i].s === 'ng') ngList.push(i);
+  }
+  
+  if (ngList.length > 0) {
+    html += '<div style="margin-top:16px;padding:12px;background:rgba(239,68,68,0.08);border-radius:var(--radius-md);border-left:4px solid #ef4444;">';
+    html += '  <div style="font-weight:700;font-size:13px;color:#dc2626;margin-bottom:8px;">⚠️ 要是正項目と是正内容</div>';
+    ngList.forEach(function(i) {
+      var plainText = ITEMS[i].replace(/<\/?[^>]+(>|$)/g, "");
+      html += '  <div style="font-size:12px;color:var(--text-main);margin-bottom:6px;line-height:1.5;">';
+      html += '    <b>' + (i + 1) + '. ' + plainText + '</b>';
+      html += '    <div style="margin-left:12px;color:#ef4444;font-weight:700;">是正案：' + (st[i].r ? st[i].r : '未入力') + '</div>';
+      html += '  </div>';
+    });
+    html += '</div>';
+  }
+  
+  document.getElementById('mc').innerHTML = html;
+  document.getElementById('ov').classList.add('show');
+}
+
+// === メールレポート作成・送信 ===
+function buildMailData() {
+  var date = document.getElementById('d1').value || '未入力';
+  var mgr = document.getElementById('d2').value || '未入力';
+  
+  var ok = 0, ng = 0, na = 0, pending = 0;
+  for (var i = 0; i < TOTAL; i++) {
+    if (st[i].s === 'ok') ok++;
+    else if (st[i].s === 'ng') ng++;
+    else if (st[i].s === 'na') na++;
+    else pending++;
+  }
+  
+  var body = '■ 作業チェックリスト結果報告\n';
+  body += '【工事名】' + GENBA_NAME + '現場 ' + WORK_CONTENT + '\n';
+  body += '【作業日】' + date + '\n';
+  body += '【作業責任者】' + mgr + '\n';
+  body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  body += '【総合計】OK: ' + ok + '件 / NG: ' + ng + '件 / 該当なし: ' + na + '件 / 未確認: ' + pending + '件\n';
+  body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  
+  secMap.forEach(function(sec) {
+    body += sec.icon + ' ' + sec.name + '\n';
+    for (var i = sec.from; i <= sec.to; i++) {
+      var statusStr = '[未確認]';
+      if (st[i].s === 'ok') statusStr = '[OK]';
+      else if (st[i].s === 'ng') statusStr = '[要対応(NG)]';
+      else if (st[i].s === 'na') statusStr = '[該当なし]';
+      
+      var plainText = ITEMS[i].replace(/<\/?[^>]+(>|$)/g, "");
+      body += '  ' + statusStr + ' ' + (i + 1) + '. ' + plainText + '\n';
+      if (st[i].s === 'ng' && st[i].r) {
+        body += '       → 是正内容: ' + st[i].r + '\n';
+      }
+    }
+    body += '\n';
+  });
+  
+  if (ng > 0) {
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+    body += '⚠️ 【要対応】NG・要是正項目一覧\n';
+    for (var i = 0; i < TOTAL; i++) {
+      if (st[i].s === 'ng') {
+        var plainText = ITEMS[i].replace(/<\/?[^>]+(>|$)/g, "");
+        body += '・' + (i + 1) + '. ' + plainText + '\n';
+        body += '  [是正内容] ' + (st[i].r ? st[i].r : '未入力') + '\n';
+      }
+    }
+    body += '━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  }
+  
+  return { date: date, mgr: mgr, body: body };
+}
+
+function sendMail() {
+  var m = buildMailData();
+  var subj = '【作業チェックリスト】' + GENBA_NAME + '現場_' + WORK_CONTENT.replace(/・|，/g, "_") + '_' + m.date + '_' + m.mgr;
+  var recs = 'tokoro@toko1979.co.jp,kunugi@toko1979.co.jp,d.mori@toko1979.co.jp,t.kato@toko1979.co.jp';
+  
+  var mailtoUrl = 'mailto:' + recs + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(m.body);
+  
+  var a = document.createElement('a');
+  a.href = mailtoUrl;
+  a.click();
+  
+  setTimeout(function() {
+    document.getElementById('mail-subject-text').value = subj;
+    document.getElementById('mail-body-text').value = m.body;
+    document.getElementById('copy-modal').classList.add('show');
+  }, 500);
+}
+
+function copyText(id, btn) {
+  var el = document.getElementById(id);
+  el.select();
+  el.setSelectionRange(0, 99999);
+  
+  try {
+    document.execCommand('copy');
+    btn.textContent = '✅ コピー完了！';
+    setTimeout(function() { btn.textContent = '📋 コピー'; }, 2000);
+  } catch (e) {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(el.value).then(function() {
+        btn.textContent = '✅ コピー完了！';
+        setTimeout(function() { btn.textContent = '📋 コピー'; }, 2000);
+      });
+    }
+  }
+}
+
+function closeOv(e) {
+  if (e.target === document.getElementById('ov')) {
+    document.getElementById('ov').classList.remove('show');
+  }
+}
+function closeCopyModal(e) {
+  if (e.target === document.getElementById('copy-modal')) {
+    document.getElementById('copy-modal').classList.remove('show');
+  }
+}
+</script>
+</body>
+</html>
